@@ -579,3 +579,23 @@ the default and the owner's choice. A missing tag or local changes leave the clo
 core (the cast for any project, the brief, handoffs, roles learn, the critical path) and marks the board and parallel
 running *(scale-up)*, with the GPU lock, job router, delegated merge gate and team-ops named as part of that profile;
 a project's own process wins. **Revisit** if pinned users report needing a channel between releases and `main`.
+
+## D35 - OpenCode again: generated v2 roles and `tools/sync-opencode` (2026-11-13)
+
+**Context.** The owner, 2026-11-13, asked for OpenCode support built like the Qwen installer. It reverses the
+2026-10-08 choice to generate for Qwen Code only, made because OpenCode couldn't give the agents their own git identity.
+Checked on OpenCode 2.2.7 (Windows, local model): it loaded the skills already linked into `~/.claude/skills`, skipped
+every role file (Claude Code frontmatter, a warning in its log only), and loaded no rules at all, because it neither
+reads `~/.claude/CLAUDE.md` (its rules page says it falls back to it) nor follows `@` imports.
+**Decision.** `tools/gen_local_agents.py` also writes `local-agents/opencode/`: each role as a v2 subagent whose
+permissions deny everything and then allow what its tools map to (colours as hex), and the same rule-sheet wrapper as
+Qwen's. `tools/sync-opencode` links skills and roles into OpenCode's config folder, adds the wrapper and
+`~/.claude/CLAUDE.md` to `opencode.json` `instructions`, and `--check` asks OpenCode itself (`opencode debug agents`,
+`opencode api skill.list`) whether every role arrived with its permissions and colour. Small, not the Qwen installer's
+manifest and journal: it changes only links it made and two list entries. Verified 2026-11-13: `--check` passed, a
+Claude Code-format role and a colour name each made it fail, and an `opencode run` on the local model quoted rule 10 and the
+personal rules with the entries and answered NONE without them.
+**Not done.** No git identity for OpenCode agents (it has no env setting for agents): they commit as the shell's
+user. No core sheet for small models; the full sheet is about 1,300 tokens. Only the main agent's loading was run on a
+model; no role has done real work in OpenCode.
+**Revisit** if a role misbehaves in real OpenCode work, or a small model's context runs short.

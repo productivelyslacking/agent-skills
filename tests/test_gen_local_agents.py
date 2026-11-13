@@ -22,7 +22,9 @@
   that answers (else by the estimate, said in the output), and the estimate never counts lower than the endpoint;
 - --rules core installs the core sheet and roles, is recorded and kept by --sync, and switching back and
   uninstalling leaves HOME byte-identical; a real Qwen Code run against a scripted model sends the core sheet in
-  its prompt under core and the full sheet under full (skipped where `qwen` isn't installed).
+  its prompt under core and the full sheet under full (skipped where `qwen` isn't installed);
+- the OpenCode roles carry only v2 frontmatter (a subagent, a hex colour, permissions that deny all first), allow
+  exactly what their tools map to and nothing disallowed, and an unmapped colour stops the generator.
 """
 import base64, hashlib, http.server, json, os, pathlib, shutil, stat, subprocess, sys, tempfile, threading, unittest
 
@@ -207,9 +209,11 @@ def first_paragraph(text):
 class Preamble(unittest.TestCase):
     def test_every_generated_role_and_the_rules_wrapper_start_with_it(self):
         out = g.generate(ROOT)
-        roles = [rel for rel in out if rel.startswith("local-agents/qwen/agents/")]
-        self.assertEqual(len(roles), len(list((ROOT / "agents").glob("*.md"))))
-        for rel in roles + ["local-agents/qwen/AGENTS.md"]:
+        for tool in ("qwen", "opencode"):
+            roles = [rel for rel in out if rel.startswith(f"local-agents/{tool}/agents/")]
+            self.assertEqual(len(roles), len(list((ROOT / "agents").glob("*.md"))))
+        roles = [rel for rel in out if "/agents/" in rel]
+        for rel in roles + ["local-agents/qwen/AGENTS.md", "local-agents/opencode/AGENTS.md"]:
             with self.subTest(rel):
                 self.assertEqual(first_paragraph(out[rel]), PREAMBLE)
                 self.assertEqual(first_paragraph((ROOT / rel).read_text()), PREAMBLE)  # the committed copy
@@ -222,6 +226,57 @@ class Preamble(unittest.TestCase):
             root, home = copy_library(pathlib.Path(tmp) / "lib"), make_home(tmp)
             self.assertEqual(gen(root, home, "--install").returncode, 0)
             self.assertEqual(first_paragraph((home / ".qwen" / "AGENTS.md").read_text()), PREAMBLE)
+
+
+def opencode_front(text):
+    """An OpenCode role's frontmatter: {key: value} for top-level keys, and its permissions as (action, resource,
+    effect) triples in order."""
+    import re
+    block = re.match(r"---\n(.*?)\n---\n", text, re.S).group(1)
+    top = {l.split(":", 1)[0]: l.split(":", 1)[1].strip() for l in block.splitlines() if not l.startswith(" ")}
+    vals = [json.loads(v) if v.startswith('"') else v
+            for v in re.findall(r"^ +-? *(?:action|resource|effect): (.*)$", block, re.M)]
+    return top, [tuple(vals[i:i + 3]) for i in range(0, len(vals), 3)]
+
+
+class OpenCodeRoles(unittest.TestCase):
+    """The roles in OpenCode's v2 format (D35). tools/sync-opencode --check asks a real OpenCode whether it loads
+    them; these hold the shape it accepted on 2.2.7."""
+
+    def test_v2_frontmatter_only(self):
+        for rel, text in g.generate(ROOT).items():
+            if not rel.startswith("local-agents/opencode/agents/"):
+                continue
+            with self.subTest(rel):
+                top, perms = opencode_front(text)
+                self.assertEqual(set(top) - {"color"}, {"description", "mode", "permissions"})  # no v1 name/tools/model
+                self.assertEqual(top["mode"], "subagent")
+                self.assertRegex(json.loads(top["color"]), r"^#[0-9a-f]{6}$")
+                self.assertEqual(perms[0], ("*", "*", "deny"))
+
+    def test_permissions_follow_the_roles_tools(self):
+        out = g.generate(ROOT)
+        allowed = lambda role: {a for a, r, e in opencode_front(out[f"local-agents/opencode/agents/{role}.md"])[1]
+                                if e == "allow" and r == "*"}
+        self.assertEqual(allowed("qa"), {"read", "grep", "glob", "shell", "skill", "external_directory"})
+        self.assertTrue({"edit", "webfetch", "websearch"} <= allowed("developer"))
+
+    def test_disallowed_edit_is_not_allowed(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = library(tmp, {"AGENTS.md": RULES})
+            text = (root / "agents" / "qa.md").read_text().replace("tools: ", "tools: Edit, ", 1)
+            (root / "agents" / "qa.md").write_text(text.replace("model:", "disallowedTools: Edit, Write\nmodel:", 1))
+            perms = opencode_front(g.opencode_agent(root, root / "agents" / "qa.md"))[1]
+            self.assertNotIn(("edit", "*", "allow"), perms)
+
+    def test_unmapped_colour_stops_the_generator(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = library(tmp, {"AGENTS.md": RULES})
+            path = root / "agents" / "qa.md"
+            path.write_text(path.read_text().replace("color: red", "color: mauve"))
+            with self.assertRaises(SystemExit) as e:
+                g.opencode_agent(root, path)
+            self.assertIn("color 'mauve'", str(e.exception.code))
 
 
 class InstallRoundTrip(unittest.TestCase):

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Generates the library's role agents for Qwen Code, the studio's local-LLM agent tool, and installs the
-library for it (Python 3 standard library only). agents/*.md, skills/ and AGENTS.md stay the one source;
+library for it (Python 3 standard library only); also generates the roles for OpenCode (tools/sync-opencode installs those). agents/*.md, skills/ and AGENTS.md stay the one source;
 local-agents/ is generated from them, committed, and checked for staleness.
 
     python3 tools/gen_local_agents.py                  write local-agents/ from agents/*.md and the library text
@@ -39,8 +39,11 @@ What Qwen Code 0.25.0 reads (its source at tag v0.25.0, read 2026-10-08):
 - rule files: only the start folder's and its parents', at start (memoryDiscovery.ts). A subfolder's AGENTS.md is
   never loaded and telling the model to read it failed 3 of 3 live runs (2026-10-08), so an agent has to be
   started in the folder it works in; LOCAL-TOOLS.md says so.
-opencode was generated for too until 2026-10-08 (the user chose Qwen Code; opencode can't set the agents' git
-identity); --uninstall still removes what those earlier installs put in ~/.config/opencode.
+
+OpenCode (D35): local-agents/opencode/ holds the roles in OpenCode's v2 agent format and the same rule-sheet wrapper;
+tools/sync-opencode links them in. What OpenCode 2.2.7 reads, checked on it 2026-11-13: agents from
+~/.config/opencode/agents/*.md, where a file with Claude Code's frontmatter (`tools:` as a string, a colour name) is
+skipped with only a log warning; permissions as an ordered list, last match wins (opencode.ai/docs/permissions).
 """
 import argparse, base64, csv, fcntl, hashlib, json, math, os, pathlib, re, signal, stat, subprocess, sys
 import urllib.request
@@ -49,7 +52,7 @@ ROOT = pathlib.Path(__file__).resolve().parents[1]
 OUT = "local-agents"
 HOME = pathlib.Path.home()
 QW_DIR = HOME / ".qwen"
-OC_DIR = HOME / ".config" / "opencode"  # legacy cleanup only
+OC_DIR = HOME / ".config" / "opencode"  # the pre-manifest builds' opencode.json keys, cleaned up by --uninstall
 STATE_DIR = HOME / ".local" / "state" / "gen_local_agents"
 MANIFEST = STATE_DIR / "manifest.json"
 JOURNAL = STATE_DIR / "journal.json"  # the planned changes of a run in progress; present only if it was interrupted
@@ -75,6 +78,17 @@ QWEN = {
     "WebFetch": ["web_fetch"], "WebSearch": ["web_search"], "Skill": ["skill"], "Agent": ["agent"],
     "Task": ["agent"], "TodoWrite": ["todo_write"],
 }
+# Claude Code tool name -> OpenCode v2 permission actions (opencode.ai/docs/permissions, read 2026-11-13; the names
+# match `opencode debug agents` on 2.2.7). Edit, Write and NotebookEdit are all `edit` there. TodoWrite has none:
+# OpenCode's todos are an experimental flag, not a permission.
+OPENCODE = {
+    "Read": ["read"], "Edit": ["edit"], "Write": ["edit"], "NotebookEdit": ["edit"], "Glob": ["glob"],
+    "Grep": ["grep"], "Bash": ["shell"], "WebFetch": ["webfetch"], "WebSearch": ["websearch"], "Skill": ["skill"],
+    "Agent": ["subagent"], "Task": ["subagent"], "TodoWrite": [],
+}
+# Claude Code's agent colours -> the six-digit hex OpenCode requires (a name makes it skip the file).
+COLORS = {"red": "#e5484d", "orange": "#f76b15", "yellow": "#ffc53d", "green": "#30a46c", "blue": "#0090ff",
+          "purple": "#8e4ec6", "pink": "#d6409f", "cyan": "#00a2c7"}
 
 # Claude-specific terms in the library's text a Qwen Code agent reads (a role's description and body: the generator
 # rewrites the rest of its frontmatter). Each is (id, pattern, what it means for a Qwen Code agent); the explanation
@@ -196,7 +210,7 @@ def frontmatter(path):
 
 def tool_list(front, key, path):
     names = [t.strip() for t in front.get(key, "").split(",") if t.strip()]
-    unknown = [t for t in names if t not in QWEN]
+    unknown = [t for t in names if t not in QWEN or t not in OPENCODE]
     if unknown:
         sys.exit(f"{path}: {key} names {unknown}, which have no mapping in tools/gen_local_agents.py")
     return names
@@ -439,12 +453,47 @@ def core_agent(root, path):
     return full[:front_end] + note + body
 
 
+def opencode_agent(root, path):
+    """A role in OpenCode's v2 agent format: a subagent whose permissions deny everything, then allow the actions
+    its Claude Code tools map to (last match wins). The id is the file name; `name` and `tools` are v1 fields."""
+    front, body = frontmatter(path)
+    if front.get("model", "inherit") != "inherit":
+        sys.exit(f"{path}: model '{front['model']}' has no OpenCode mapping (only inherit does)")
+    color = front.get("color")
+    if color and color not in COLORS:
+        sys.exit(f"{path}: color '{color}' has no hex value in tools/gen_local_agents.py COLORS")
+    names = tool_list(front, "tools", path)
+    denied = {a for t in tool_list(front, "disallowedTools", path) for a in OPENCODE[t]}
+    actions = [a for a in dict.fromkeys(a for t in names for a in OPENCODE[t]) if a not in denied]
+    # Roles work in worktrees outside the folder OpenCode started in, so paths outside it stay open, as in Claude Code.
+    perms = [("*", "*", "deny")] + [(a, "*", "allow") for a in actions] + [("external_directory", "*", "allow")]
+    if "read" in actions:  # OpenCode's own default: ask before reading a .env file (the deny-all above replaced it)
+        perms += [("read", "*.env", "ask"), ("read", "*.env.*", "ask"), ("read", "*.env.example", "allow")]
+    lines = ["---", f"description: {q(front['description'])}", "mode: subagent"]
+    if color:
+        lines.append(f"color: {q(COLORS[color])}")
+    lines.append("permissions:")
+    for action, resource, effect in perms:
+        lines += [f"  - action: {q(action)}", f"    resource: {q(resource)}", f"    effect: {effect}"]
+    lines.append("---")
+    pairs = ", ".join(f"{k}={'/'.join(OPENCODE[k]) or 'none'}" for k in names)
+    note = (f"<!-- {MARK} from {path.relative_to(root)} (git blob {blob(path)}); edit that file, not this one. -->\n"
+            f"{PREAMBLE}\n\n"
+            f"(For OpenCode: this role's text uses Claude Code's tool names; your permissions are {pairs}. Load a skill"
+            f" with the `skill` tool. Where the text says `scratchpad/<task>/`, use the per-task folder your brief"
+            f" names, else `scratch/<task>/` in the folder you were started in, and give its absolute path. Where it"
+            f" says a project's CLAUDE.md arrives by itself or not to open it, read it yourself before changing"
+            f" anything there: OpenCode may not have loaded it.)\n\n")
+    return "\n".join(lines) + "\n" + note + body
+
+
 def generate(root):
     out = {f"{OUT}/LOCAL-TOOLS.md": local_tools_note(root), f"{OUT}/qwen/AGENTS.md": rules_wrapper(root),
-           CORE_SHEET: core_sheet(root)}
+           CORE_SHEET: core_sheet(root), f"{OUT}/opencode/AGENTS.md": rules_wrapper(root)}
     for path in sorted((root / "agents").glob("*.md")):
         out[f"{OUT}/qwen/agents/{path.name}"] = qwen_agent(root, path)
         out[f"{OUT}/qwen/agents-core/{path.name}"] = core_agent(root, path)
+        out[f"{OUT}/opencode/agents/{path.name}"] = opencode_agent(root, path)
     return out
 
 
@@ -918,10 +967,10 @@ def legacy_present():
     """Signs of an install from before the manifest (2026-10-08 builds): links into local-agents/ or a
     generated SKILLS.md, with no manifest to say what was there before."""
     found = []
-    for d in (QW_DIR / "agents", OC_DIR / "agents"):
-        for p in sorted(d.glob("*.md")) if d.is_dir() else []:
-            if p.is_symlink() and f"/{OUT}/" in os.readlink(p):
-                found.append(p)
+    # ~/.qwen only: links into local-agents/ under ~/.config/opencode are now tools/sync-opencode's (D35).
+    for p in sorted((QW_DIR / "agents").glob("*.md")) if (QW_DIR / "agents").is_dir() else []:
+        if p.is_symlink() and f"/{OUT}/" in os.readlink(p):
+            found.append(p)
     for name in ("AGENTS.md", "CLAUDE.md", "LOCAL-TOOLS.md"):
         p = QW_DIR / name
         if p.is_symlink() and (f"/{OUT}/" in os.readlink(p) or os.readlink(p).endswith(("/AGENTS.md", "/CLAUDE.md"))):
@@ -1085,9 +1134,9 @@ def uninstall_legacy():
     plan = Plan()
     for p in gone:
         plan.unlink(p)
-    for d in (QW_DIR / "agents", OC_DIR / "agents"):
-        if d.is_dir() and all(c in gone for c in d.iterdir()):
-            plan.rmdir(d)
+    d = QW_DIR / "agents"
+    if d.is_dir() and all(c in gone for c in d.iterdir()):
+        plan.rmdir(d)
     for path, (data, style) in files.items():
         for key, value in old[path].items():
             if get(data, key) == value:

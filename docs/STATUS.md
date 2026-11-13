@@ -1,6 +1,6 @@
 # Status
 
-Where things stand today and the next step (pick up here). Updated 2026-11-13, after D34. Open work is in the issue tracker.
+Where things stand today and the next step (pick up here). Updated 2026-11-13, after D35. Open work is in the issue tracker.
 
 ## Where things stand
 
@@ -21,6 +21,9 @@ Where things stand today and the next step (pick up here). Updated 2026-11-13, a
   they are due a revision after their first review of a story game that teaches programming.
 - **Machines:** set up and checked on Linux (2026-11-07) and Windows with the check in WSL (2026-11-13): README, "Run it".
   Machine notes and personal rules live in each owner's `~/.claude/CLAUDE.md`, not here (D27).
+- **OpenCode (D35):** `tools/sync-opencode` installs the skills, the generated roles and the rule sheet; on this
+  Windows machine (OpenCode 2.2.7, local model) `--check` passes and a session quotes the rules (2026-11-13). No role
+  has done real work in OpenCode yet, and its agents commit as the shell's user.
 - **Local agents (Qwen Code):** the generated files are on `main` and `--check` passes. Qwen Code is not installed on
   this machine (no `~/.qwen`). The owner isn't using them as of 2026-11-07 but may again, so the files stay, `--rules full`
   stays the default, and the full-or-core question waits (#13).

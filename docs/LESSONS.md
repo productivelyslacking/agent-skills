@@ -28,3 +28,8 @@ Traps and corrected facts about this repo. Lessons from other projects waiting t
   new repo under Git for Windows (`core.filemode=false`) committed every script as 100644, and CI failed with
   "Permission denied" on `tools/check.sh`. Restore modes with `git update-index --chmod=+x` from the source tree's
   `git ls-tree` and confirm with `git ls-files -s` before the first push.
+- **2026-11-13 - OpenCode 2.2.7 fails quietly, and its docs describe more than it does.** It skips an agent file in
+  Claude Code's format, and drops a bad field (a colour name) from a v2 one, with only a log line; it reads neither
+  `~/.claude/CLAUDE.md` (its rules page says it does) nor `@` imports. Its background service keeps the old config
+  until `opencode reload`. Test what it loads, not the files: `tools/sync-opencode --check`, and for the rules
+  `opencode run "Quote the bold title of working rule 10, or say NONE"`, which must answer NONE after `--uninstall`.

@@ -9,7 +9,7 @@
   copy layout-check reads).
 - No role or skill tells a subagent to write its detail file under a name Claude Code's Write tool refuses
   to subagents (report.md, summary.md, findings.md; measured 2026-10-06), so briefs name a path that works.
-- local-agents/ (the roles and rule sheet generated for Qwen Code) is current: tools/gen_local_agents.py --check
+- local-agents/ (the roles and rule sheet generated for Qwen Code and OpenCode) is current: tools/gen_local_agents.py --check
   (which also prints, without failing, a count of Claude-specific terms per file).
 """
 import importlib.machinery, importlib.util, pathlib, re, sys

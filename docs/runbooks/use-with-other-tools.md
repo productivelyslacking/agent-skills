@@ -1,7 +1,7 @@
 # Use the library with other AI tools
 
 **Just do this:** clone the repo, then link the skills into the folder your tool reads and point its rules file at
-`AGENTS.md`. Claude Code is the tested setup (README, "Run it"), and Qwen Code has its own installer, built against Qwen Code 0.25.0 and run live on Linux
+`AGENTS.md`. Claude Code is the tested setup (README, "Run it"), OpenCode has `tools/sync-opencode`, checked on OpenCode 2.2.7 on Windows (2026-11-13, below), and Qwen Code has its own installer, built against Qwen Code 0.25.0 and run live on Linux
 (2026-10-08; not re-checked since). Every other row below comes from the vendor's docs,
 read 2026-11-13, and is **untested here**; check a tool's docs if a path has moved.
 
@@ -24,8 +24,8 @@ Mode on, README "Run it"):
 mkdir -p ~/.agents/skills && for s in /path/to/agent-skills/skills/*/; do ln -sfn "$s" ~/.agents/skills/"$(basename "$s")"; done
 ```
 
-Re-run it after a pull that adds a skill. Tools that read both `~/.claude/skills` and `~/.agents/skills` (OpenCode,
-Cursor) may list each skill twice; link only one of the two for them.
+Re-run it after a pull that adds a skill. Tools that read both `~/.claude/skills` and `~/.agents/skills` (Cursor)
+may list each skill twice; link only one of the two for them. OpenCode lists a skill found in both once.
 
 ## Per tool
 
@@ -34,7 +34,7 @@ Cursor) may list each skill twice; link only one of the two for them.
 | **Claude Code** | `~/.claude/skills` (`tools/sync-claude`) | `~/.claude/CLAUDE.md` imports the repo's `CLAUDE.md` | `~/.claude/agents` |
 | **Codex CLI** | `~/.agents/skills`; symlinks followed | Link or copy to `~/.codex/AGENTS.md` (no import syntax) | TOML in `~/.codex/agents`: not compatible |
 | **Gemini CLI** | `~/.agents/skills`, or `/skills link /path/to/agent-skills/skills --scope user` | `~/.gemini/GEMINI.md` holding `@/path/to/agent-skills/AGENTS.md` | `~/.gemini/agents` (Markdown) |
-| **OpenCode** | `~/.agents/skills` or `~/.claude/skills` | `"instructions": ["/path/to/agent-skills/AGENTS.md"]` in `~/.config/opencode/opencode.json` (it doesn't follow `@` imports) | `~/.config/opencode/agents` (own format) |
+| **OpenCode** | `python3 tools/sync-opencode` links them into `~/.config/opencode/skills` | Added by the same command to `opencode.json` `instructions` (OpenCode 2.2.7 reads neither `~/.claude/CLAUDE.md` nor `@` imports) | Generated in its own format into `local-agents/opencode/`, linked by the same command; `--check` asks OpenCode whether they all loaded |
 | **Copilot CLI** | `~/.agents/skills` | Copy into `~/.copilot/copilot-instructions.md` (no import syntax) | `.agent.md` in `~/.copilot/agents` |
 | **Copilot in VS Code** | `~/.copilot/skills` (Copilot harness) | `~/.copilot/copilot-instructions.md` | `~/.copilot/agents` |
 | **Cursor** | `~/.agents/skills` or `~/.claude/skills` | Paste into User Rules (Settings); a project's `AGENTS.md` is read | `~/.claude/agents` read |
