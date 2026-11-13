@@ -1,75 +1,169 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 400" width="1280" height="400" role="img" aria-label="agent-skills: rules, skills and roles for AI coding agents">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 400" width="1280" height="400" role="img" aria-label="AGENT//SKILLS: a retro-future starship bridge, the producer in the centre chair and crew at stations labelled DEV, QA, LEAD, REVIEW, OPS and DESIGN, looking out at space">
   <defs>
-    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#07021a"/>
-      <stop offset="0.55" stop-color="#1d0a3f"/>
-      <stop offset="0.78" stop-color="#5a0f63"/>
-      <stop offset="1" stop-color="#ff2e88"/>
-    </linearGradient>
+    <radialGradient id="space" cx="0.5" cy="0.35" r="0.8">
+      <stop offset="0" stop-color="#1a0b3a"/>
+      <stop offset="0.6" stop-color="#0b0420"/>
+      <stop offset="1" stop-color="#03010a"/>
+    </radialGradient>
+    <radialGradient id="nebulaPink" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#ff2e88" stop-opacity="0.55"/>
+      <stop offset="1" stop-color="#ff2e88" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="nebulaCyan" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#3cf2ff" stop-opacity="0.35"/>
+      <stop offset="1" stop-color="#3cf2ff" stop-opacity="0"/>
+    </radialGradient>
     <linearGradient id="sun" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0" stop-color="#ffe36e"/>
       <stop offset="0.5" stop-color="#ff8a3d"/>
       <stop offset="1" stop-color="#ff2e88"/>
+    </linearGradient>
+    <linearGradient id="planet" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#7b5cff"/>
+      <stop offset="1" stop-color="#1b0f4a"/>
     </linearGradient>
     <linearGradient id="title" x1="0" y1="0" x2="1" y2="0">
       <stop offset="0" stop-color="#3cf2ff"/>
       <stop offset="0.5" stop-color="#ffffff"/>
       <stop offset="1" stop-color="#ff4fd8"/>
     </linearGradient>
-    <linearGradient id="floor" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#14002b"/>
-      <stop offset="1" stop-color="#05000f"/>
+    <linearGradient id="hull" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#160a2e"/>
+      <stop offset="1" stop-color="#05020d"/>
+    </linearGradient>
+    <linearGradient id="deck" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#12062a"/>
+      <stop offset="1" stop-color="#030108"/>
     </linearGradient>
     <mask id="sunstripes">
-      <rect x="0" y="0" width="1280" height="400" fill="#fff"/>
-      <rect x="0" y="214" width="1280" height="3" fill="#000"/>
-      <rect x="0" y="226" width="1280" height="5" fill="#000"/>
-      <rect x="0" y="239" width="1280" height="7" fill="#000"/>
-      <rect x="0" y="252" width="1280" height="9" fill="#000"/>
+      <rect width="1280" height="400" fill="#fff"/>
+      <rect x="0" y="192" width="1280" height="3" fill="#000"/>
+      <rect x="0" y="203" width="1280" height="4" fill="#000"/>
+      <rect x="0" y="215" width="1280" height="5" fill="#000"/>
     </mask>
-    <filter id="glow" x="-20%" y="-50%" width="140%" height="200%">
-      <feGaussianBlur stdDeviation="6" result="b"/>
+    <clipPath id="viewport">
+      <path d="M150,28 L1130,28 L1210,250 L70,250 Z"/>
+    </clipPath>
+    <filter id="glow" x="-20%" y="-60%" width="140%" height="220%">
+      <feGaussianBlur stdDeviation="5" result="b"/>
       <feMerge><feMergeNode in="b"/><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
     </filter>
-    <filter id="softglow" x="-10%" y="-10%" width="120%" height="120%">
-      <feGaussianBlur stdDeviation="2.5" result="b"/>
+    <filter id="soft" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="2" result="b"/>
       <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
     </filter>
-    <clipPath id="floorclip"><rect x="0" y="262" width="1280" height="138"/></clipPath>
   </defs>
 
-  <rect width="1280" height="400" fill="url(#sky)"/>
+  <!-- hull around the viewport -->
+  <rect width="1280" height="400" fill="url(#hull)"/>
 
-  <g fill="#ffffff" opacity="0.8">
-    <circle cx="90" cy="40" r="1.4"/><circle cx="210" cy="92" r="1"/><circle cx="330" cy="28" r="1.6"/>
-    <circle cx="470" cy="70" r="1"/><circle cx="820" cy="36" r="1.3"/><circle cx="930" cy="84" r="1"/>
-    <circle cx="1050" cy="30" r="1.6"/><circle cx="1180" cy="66" r="1.1"/><circle cx="1240" cy="120" r="0.9"/>
-    <circle cx="40" cy="130" r="0.9"/><circle cx="700" cy="22" r="1"/><circle cx="380" cy="140" r="0.8"/>
+  <!-- space through the viewport -->
+  <g clip-path="url(#viewport)">
+    <rect width="1280" height="260" fill="url(#space)"/>
+    <ellipse cx="300" cy="120" rx="260" ry="110" fill="url(#nebulaPink)"/>
+    <ellipse cx="980" cy="90" rx="240" ry="100" fill="url(#nebulaCyan)"/>
+    <g fill="#ffffff">
+      <circle cx="190" cy="60" r="1.2"/><circle cx="240" cy="190" r="0.9"/><circle cx="310" cy="45" r="1.5"/>
+      <circle cx="372" cy="214" r="1"/><circle cx="420" cy="88" r="0.8"/><circle cx="468" cy="160" r="1.3"/>
+      <circle cx="530" cy="52" r="1"/><circle cx="560" cy="230" r="0.8"/><circle cx="610" cy="96" r="0.7"/>
+      <circle cx="690" cy="70" r="1.1"/><circle cx="745" cy="205" r="0.9"/><circle cx="790" cy="40" r="1.4"/>
+      <circle cx="842" cy="150" r="0.8"/><circle cx="905" cy="226" r="1.2"/><circle cx="960" cy="58" r="0.9"/>
+      <circle cx="1015" cy="180" r="1.3"/><circle cx="1068" cy="104" r="0.8"/><circle cx="1110" cy="214" r="1"/>
+      <circle cx="140" cy="236" r="0.9"/><circle cx="1150" cy="150" r="0.7"/><circle cx="655" cy="236" r="1"/>
+    </g>
+    <!-- light streaks: the ship is under way -->
+    <g stroke="#3cf2ff" stroke-width="1.2" opacity="0.55" stroke-linecap="round">
+      <line x1="640" y1="192" x2="420" y2="70"/><line x1="640" y1="192" x2="880" y2="64"/>
+      <line x1="640" y1="192" x2="360" y2="216"/><line x1="640" y1="192" x2="930" y2="222"/>
+    </g>
+    <g stroke="#ff4fd8" stroke-width="1" opacity="0.5" stroke-linecap="round">
+      <line x1="640" y1="192" x2="520" y2="40"/><line x1="640" y1="192" x2="770" y2="236"/>
+    </g>
+    <!-- striped synthwave star and a ringed planet -->
+    <circle cx="640" cy="192" r="44" fill="url(#sun)" mask="url(#sunstripes)" filter="url(#soft)"/>
+    <circle cx="1010" cy="196" r="34" fill="url(#planet)"/>
+    <ellipse cx="1010" cy="198" rx="62" ry="11" fill="none" stroke="#ffe36e" stroke-width="2" opacity="0.8" transform="rotate(-14 1010 198)"/>
   </g>
 
-  <circle cx="640" cy="252" r="96" fill="url(#sun)" mask="url(#sunstripes)" filter="url(#softglow)"/>
-
-  <polyline points="0,262 120,214 210,246 330,190 450,250 520,232 560,262" fill="#0d0221" stroke="#ff4fd8" stroke-width="2" filter="url(#softglow)"/>
-  <polyline points="720,262 790,226 880,248 990,186 1100,240 1190,208 1280,262" fill="#0d0221" stroke="#ff4fd8" stroke-width="2" filter="url(#softglow)"/>
-
-  <rect x="0" y="262" width="1280" height="138" fill="url(#floor)"/>
-  <g clip-path="url(#floorclip)" stroke="#3cf2ff" stroke-width="1.6" opacity="0.85" filter="url(#softglow)">
-    <line x1="0" y1="264" x2="1280" y2="264"/>
-    <line x1="0" y1="270" x2="1280" y2="270"/>
-    <line x1="0" y1="279" x2="1280" y2="279"/>
-    <line x1="0" y1="292" x2="1280" y2="292"/>
-    <line x1="0" y1="310" x2="1280" y2="310"/>
-    <line x1="0" y1="334" x2="1280" y2="334"/>
-    <line x1="0" y1="366" x2="1280" y2="366"/>
-    <line x1="640" y1="262" x2="640" y2="400"/>
-    <line x1="640" y1="262" x2="520" y2="400"/><line x1="640" y1="262" x2="760" y2="400"/>
-    <line x1="640" y1="262" x2="390" y2="400"/><line x1="640" y1="262" x2="890" y2="400"/>
-    <line x1="640" y1="262" x2="250" y2="400"/><line x1="640" y1="262" x2="1030" y2="400"/>
-    <line x1="640" y1="262" x2="90" y2="400"/><line x1="640" y1="262" x2="1190" y2="400"/>
-    <line x1="640" y1="262" x2="-90" y2="400"/><line x1="640" y1="262" x2="1370" y2="400"/>
-    <line x1="640" y1="262" x2="-300" y2="400"/><line x1="640" y1="262" x2="1580" y2="400"/>
+  <!-- viewport frame and struts -->
+  <path d="M150,28 L1130,28 L1210,250 L70,250 Z" fill="none" stroke="#3cf2ff" stroke-width="3" filter="url(#soft)"/>
+  <g stroke="#2a1452" stroke-width="10">
+    <line x1="252" y1="28" x2="200" y2="250"/><line x1="1028" y1="28" x2="1080" y2="250"/>
+  </g>
+  <g stroke="#ff4fd8" stroke-width="1.5" opacity="0.8">
+    <line x1="252" y1="28" x2="200" y2="250"/><line x1="1028" y1="28" x2="1080" y2="250"/>
   </g>
 
-  <text x="640" y="112" text-anchor="middle" font-family="'Courier New', Consolas, monospace" font-size="92" font-weight="700" letter-spacing="10" fill="url(#title)" filter="url(#glow)">AGENT//SKILLS</text>
-  <text x="640" y="150" text-anchor="middle" font-family="'Courier New', Consolas, monospace" font-size="22" letter-spacing="6" fill="#ffe36e" filter="url(#softglow)">RULES · SKILLS · ROLES  FOR AI CODING AGENTS</text>
+  <!-- title on the viewport -->
+  <text x="640" y="82" text-anchor="middle" font-family="'Courier New', Consolas, monospace" font-size="70" font-weight="700" letter-spacing="8" fill="url(#title)" filter="url(#glow)">AGENT//SKILLS</text>
+  <text x="640" y="114" text-anchor="middle" font-family="'Courier New', Consolas, monospace" font-size="18" letter-spacing="5" fill="#ffe36e" filter="url(#soft)">RULES · SKILLS · ROLES FOR AI AGENT CREWS</text>
+
+  <!-- deck -->
+  <path d="M0,262 L1280,262 L1280,400 L0,400 Z" fill="url(#deck)"/>
+  <g stroke="#3cf2ff" stroke-width="1" opacity="0.25">
+    <line x1="0" y1="300" x2="1280" y2="300"/><line x1="0" y1="350" x2="1280" y2="350"/>
+    <line x1="640" y1="262" x2="400" y2="400"/><line x1="640" y1="262" x2="880" y2="400"/>
+    <line x1="640" y1="262" x2="160" y2="400"/><line x1="640" y1="262" x2="1120" y2="400"/>
+  </g>
+
+  <!-- console arc -->
+  <path d="M40,300 Q640,250 1240,300 L1240,322 Q640,272 40,322 Z" fill="#1b0c3a" stroke="#ff4fd8" stroke-width="2" filter="url(#soft)"/>
+
+  <!-- stations: screen, indicator lights, label, crew member seen from behind -->
+  <g font-family="'Courier New', Consolas, monospace" font-size="14" font-weight="700" letter-spacing="2" text-anchor="middle">
+    <g transform="translate(130,0)">
+      <rect x="-38" y="300" width="76" height="16" rx="3" fill="#3cf2ff" opacity="0.85" filter="url(#soft)"/>
+      <text x="0" y="342" fill="#3cf2ff" filter="url(#soft)">DEV</text>
+      <circle cx="0" cy="364" r="13" fill="#0a0418" stroke="#3cf2ff" stroke-width="1.5"/>
+      <path d="M-30,400 Q-30,376 0,376 Q30,376 30,400 Z" fill="#0a0418" stroke="#3cf2ff" stroke-width="1.5"/>
+    </g>
+    <g transform="translate(300,0)">
+      <rect x="-38" y="290" width="76" height="16" rx="3" fill="#ff4fd8" opacity="0.85" filter="url(#soft)"/>
+      <text x="0" y="334" fill="#ff4fd8" filter="url(#soft)">QA</text>
+      <circle cx="0" cy="358" r="13" fill="#0a0418" stroke="#ff4fd8" stroke-width="1.5"/>
+      <path d="M-30,400 Q-30,370 0,370 Q30,370 30,400 Z" fill="#0a0418" stroke="#ff4fd8" stroke-width="1.5"/>
+    </g>
+    <g transform="translate(460,0)">
+      <rect x="-38" y="284" width="76" height="16" rx="3" fill="#ffe36e" opacity="0.85" filter="url(#soft)"/>
+      <text x="0" y="328" fill="#ffe36e" filter="url(#soft)">LEAD</text>
+      <circle cx="0" cy="352" r="13" fill="#0a0418" stroke="#ffe36e" stroke-width="1.5"/>
+      <path d="M-30,400 Q-30,364 0,364 Q30,364 30,400 Z" fill="#0a0418" stroke="#ffe36e" stroke-width="1.5"/>
+    </g>
+    <g transform="translate(820,0)">
+      <rect x="-38" y="284" width="76" height="16" rx="3" fill="#3cf2ff" opacity="0.85" filter="url(#soft)"/>
+      <text x="0" y="328" fill="#3cf2ff" filter="url(#soft)">REVIEW</text>
+      <circle cx="0" cy="352" r="13" fill="#0a0418" stroke="#3cf2ff" stroke-width="1.5"/>
+      <path d="M-30,400 Q-30,364 0,364 Q30,364 30,400 Z" fill="#0a0418" stroke="#3cf2ff" stroke-width="1.5"/>
+    </g>
+    <g transform="translate(980,0)">
+      <rect x="-38" y="290" width="76" height="16" rx="3" fill="#ff4fd8" opacity="0.85" filter="url(#soft)"/>
+      <text x="0" y="334" fill="#ff4fd8" filter="url(#soft)">OPS</text>
+      <circle cx="0" cy="358" r="13" fill="#0a0418" stroke="#ff4fd8" stroke-width="1.5"/>
+      <path d="M-30,400 Q-30,370 0,370 Q30,370 30,400 Z" fill="#0a0418" stroke="#ff4fd8" stroke-width="1.5"/>
+    </g>
+    <g transform="translate(1150,0)">
+      <rect x="-38" y="300" width="76" height="16" rx="3" fill="#ffe36e" opacity="0.85" filter="url(#soft)"/>
+      <text x="0" y="342" fill="#ffe36e" filter="url(#soft)">DESIGN</text>
+      <circle cx="0" cy="364" r="13" fill="#0a0418" stroke="#ffe36e" stroke-width="1.5"/>
+      <path d="M-30,400 Q-30,376 0,376 Q30,376 30,400 Z" fill="#0a0418" stroke="#ffe36e" stroke-width="1.5"/>
+    </g>
+  </g>
+
+  <!-- the producer's chair, centre -->
+  <g filter="url(#soft)">
+    <rect x="602" y="318" width="76" height="82" rx="14" fill="#0a0418" stroke="#ffffff" stroke-width="2"/>
+    <rect x="584" y="360" width="20" height="40" rx="6" fill="#0a0418" stroke="#ffffff" stroke-width="1.5"/>
+    <rect x="676" y="360" width="20" height="40" rx="6" fill="#0a0418" stroke="#ffffff" stroke-width="1.5"/>
+    <circle cx="640" cy="306" r="15" fill="#0a0418" stroke="#ffffff" stroke-width="2"/>
+  </g>
+  <text x="640" y="352" text-anchor="middle" font-family="'Courier New', Consolas, monospace" font-size="12" font-weight="700" letter-spacing="2" fill="#ffffff">PRODUCER</text>
+
+  <!-- console indicator lights -->
+  <g opacity="0.9">
+    <circle cx="210" cy="300" r="2.5" fill="#3cf2ff"/><circle cx="222" cy="299" r="2.5" fill="#ff4fd8"/>
+    <circle cx="380" cy="292" r="2.5" fill="#ffe36e"/><circle cx="392" cy="291" r="2.5" fill="#3cf2ff"/>
+    <circle cx="540" cy="286" r="2.5" fill="#ff4fd8"/><circle cx="740" cy="286" r="2.5" fill="#3cf2ff"/>
+    <circle cx="890" cy="291" r="2.5" fill="#ffe36e"/><circle cx="902" cy="292" r="2.5" fill="#ff4fd8"/>
+    <circle cx="1060" cy="299" r="2.5" fill="#3cf2ff"/><circle cx="1072" cy="300" r="2.5" fill="#ffe36e"/>
+  </g>
 </svg>

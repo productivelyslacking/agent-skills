@@ -27,5 +27,6 @@ Where things stand today and the next step (pick up here). Updated 2026-11-13, a
 
 ## Next step
 
-Three outside reviews are addressed (D31-D33). Next: squash history and make the repo public, on the owner's word.
-Later (D33): a pinned install distinct from tracking `main`; the team workflow as an explicitly optional profile.
+Public since 2026-11-13 at https://github.com/productivelyslacking/agent-skills, as one squashed commit; the
+pre-squash history is archived privately as `agent-skills-presquash`. Later (D33): a pinned install distinct from
+tracking `main`; the team workflow as an explicitly optional profile. All open work: `gh issue list`.

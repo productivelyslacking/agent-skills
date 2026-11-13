@@ -1,5 +1,5 @@
 <p align="center">
-  <img src=".github/banner.svg" alt="AGENT//SKILLS: rules, skills and roles for AI coding agents" width="100%">
+  <img src=".github/banner.svg" alt="AGENT//SKILLS: a retro-future starship bridge, the producer in the centre chair and agent crew at their stations" width="100%">
 </p>
 
 <p align="center">
