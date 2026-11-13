@@ -1,6 +1,6 @@
 # Status
 
-Where things stand today and the next step (pick up here). Updated 2026-11-13, after D33. Open work is in the issue tracker.
+Where things stand today and the next step (pick up here). Updated 2026-11-13, after D34. Open work is in the issue tracker.
 
 ## Where things stand
 
@@ -27,6 +27,6 @@ Where things stand today and the next step (pick up here). Updated 2026-11-13, a
 
 ## Next step
 
-Public since 2026-11-13 at https://github.com/productivelyslacking/agent-skills, as one squashed commit; the
-pre-squash history is archived privately as `agent-skills-presquash`. Later (D33): a pinned install distinct from
-tracking `main`; the team workflow as an explicitly optional profile. All open work: `gh issue list`.
+Public since 2026-11-13 at https://github.com/productivelyslacking/agent-skills; the pre-squash history is archived
+privately as `agent-skills-presquash`. Releases are tags (D34, `docs/runbooks/cut-a-release.md`); the owner tracks
+`main`. Nothing else is pending. All open work: `gh issue list`.

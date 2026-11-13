@@ -40,11 +40,61 @@ class SyncClaude(unittest.TestCase):
         git(self.author, "commit", "-qm", message)
         git(self.author, "push", "-q", "origin", "main")
 
-    def sync(self):
+    def sync(self, *args):
         env = dict(os.environ, HOME=str(self.home))
-        done = subprocess.run([str(self.clone / "tools/sync-claude")], env=env, capture_output=True, text=True)
+        done = subprocess.run([str(self.clone / "tools/sync-claude"), *args], env=env, capture_output=True, text=True)
         self.assertEqual(done.returncode, 0, done.stderr)
         return json.loads(done.stdout) if done.stdout.strip() else {}
+
+    def tag(self, name):
+        git(self.author, "tag", "-a", name, "-m", name)
+        git(self.author, "push", "-q", "origin", name)
+
+    def rules(self):
+        return (self.clone / "AGENTS.md").read_text()
+
+    def test_pin_stays_on_its_tag_while_main_moves(self):
+        self.tag("v1.0.0")
+        (self.author / "AGENTS.md").write_text("v2\n")
+        self.push("rules v2")
+        self.assertEqual(self.sync("--pin", "v1.0.0"), {})
+        self.assertEqual(self.rules(), "v1\n")
+        self.sync("--pin", "v1.0.0")
+        self.assertEqual(self.rules(), "v1\n")
+        self.assertTrue((self.home / ".claude/skills/one").is_symlink())
+
+    def test_pin_moves_to_a_newer_tag_and_says_the_rules_changed(self):
+        self.tag("v1.0.0")
+        self.sync("--pin", "v1.0.0")
+        (self.author / "AGENTS.md").write_text("v2\n")
+        self.push("rules v2")
+        self.tag("v1.1.0")
+        out = self.sync("--pin", "v1.1.0")
+        self.assertEqual(self.rules(), "v2\n")
+        self.assertIn("AGENTS.md", out["hookSpecificOutput"]["additionalContext"])
+
+    def test_missing_tag_warns_and_leaves_the_clone_alone(self):
+        out = self.sync("--pin", "v9.9.9")
+        self.assertIn("v9.9.9", out["systemMessage"])
+        self.assertEqual(self.rules(), "v1\n")
+
+    def test_pin_with_local_changes_warns_and_leaves_them(self):
+        self.tag("v1.0.0")
+        (self.author / "AGENTS.md").write_text("v2\n")
+        self.push("rules v2")
+        self.sync()
+        (self.clone / "AGENTS.md").write_text("my edit\n")
+        out = self.sync("--pin", "v1.0.0")
+        self.assertIn("local changes", out["systemMessage"])
+        self.assertEqual(self.rules(), "my edit\n")
+
+    def test_back_to_main_after_a_pin(self):
+        self.tag("v1.0.0")
+        (self.author / "AGENTS.md").write_text("v2\n")
+        self.push("rules v2")
+        self.sync("--pin", "v1.0.0")
+        self.sync("--main")
+        self.assertEqual(self.rules(), "v2\n")
 
     def test_first_run_links_and_imports_silently(self):
         self.assertEqual(self.sync(), {})

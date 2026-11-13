@@ -123,6 +123,10 @@ The clone stays on the latest `main` without anyone remembering to pull. If it c
 conflict, another branch checked out), the session starts anyway and says so. Skills are read when used, so they are
 current at once. If the rule sheet changed, the session is told to re-read it, because a hook may run after it loaded.
 
+**Latest or a release.** Tracking `main` (the default) gets every change at your next session. To stay on a tested
+snapshot instead, add `--pin vX.Y.Z` to the hook's command (releases: the repo's Tags page); the clone stays there until
+you change the tag, and `--main` switches back. How releases are made: [docs/runbooks/cut-a-release.md](docs/runbooks/cut-a-release.md).
+
 The same steps by hand (macOS / Linux; edits here take effect in the next session):
 
 ```bash

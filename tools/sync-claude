@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Keeps this machine's Claude Code on the latest library: pulls main, links every skill and role,
-# and imports the rule sheet. Run by a SessionStart hook (README, "Run it"), and safe to run by hand.
+# Keeps this machine's Claude Code on the library: pulls main (the default) or stays on a release (--pin TAG),
+# links every skill and role, and imports the rule sheet. Run by a SessionStart hook (README, "Run it"); safe by hand.
 # Never stops a session: it says what went wrong and carries on with what is there.
 # Everything is in main() because a pull can replace this file while bash is still reading it.
 set -uo pipefail
@@ -43,13 +43,44 @@ main() {
   # paths for Claude Code to read. Both are no-ops elsewhere.
   export MSYS=winsymlinks:nativestrict
   if command -v cygpath >/dev/null; then root_native=$(cygpath -m "$ROOT"); fi
+  local pin="" to_main="" target
+  while [ $# -gt 0 ]; do # --pin TAG: stay on a release; --main: go back to tracking main (the default)
+    case $1 in
+      --pin) pin=${2:-}; shift 2 || shift ;;
+      --main) to_main=1; shift ;;
+      *) problems+=("unknown option $1, ignored"); shift ;;
+    esac
+  done
   before=$(git -C "$ROOT" rev-parse HEAD)
   branch=$(git -C "$ROOT" symbolic-ref --short -q HEAD || echo detached)
+  dirty=$(git -C "$ROOT" status --porcelain --untracked-files=no)
 
-  if [ "$branch" != main ]; then
-    problems+=("the clone is on $branch, not main, so it was not updated")
-  elif ! output=$(GIT_TERMINAL_PROMPT=0 timeout 10 git -C "$ROOT" pull --ff-only --quiet 2>&1); then
-    problems+=("git pull failed, so this session may be behind: ${output:0:200}")
+  if [ -n "$pin" ]; then
+    if ! output=$(GIT_TERMINAL_PROMPT=0 timeout 10 git -C "$ROOT" fetch --quiet --tags origin 2>&1); then
+      problems+=("git fetch failed, so $pin may not be found: ${output:0:200}")
+    fi
+    if ! target=$(git -C "$ROOT" rev-parse -q --verify "refs/tags/$pin^{commit}"); then
+      problems+=("release $pin was not found, so the clone was left where it was")
+    elif [ "$before" != "$target" ]; then
+      if [ -n "$dirty" ]; then
+        problems+=("the clone has local changes, so it was not moved to $pin")
+      elif ! output=$(git -C "$ROOT" -c advice.detachedHead=false checkout -q "$target" 2>&1); then
+        problems+=("could not switch to $pin: ${output:0:200}")
+      fi
+    fi
+  else
+    if [ -n "$to_main" ] && [ "$branch" != main ]; then
+      if [ -n "$dirty" ]; then
+        problems+=("the clone has local changes, so it was not switched back to main")
+      elif git -C "$ROOT" checkout -q main 2>/dev/null; then
+        branch=main
+      fi
+    fi
+    if [ "$branch" != main ]; then
+      problems+=("the clone is on $branch, not main, so it was not updated (pass --main to switch back)")
+    elif ! output=$(GIT_TERMINAL_PROMPT=0 timeout 10 git -C "$ROOT" pull --ff-only --quiet 2>&1); then
+      problems+=("git pull failed, so this session may be behind: ${output:0:200}")
+    fi
   fi
   after=$(git -C "$ROOT" rev-parse HEAD)
 

@@ -567,3 +567,15 @@ current project or task delegates merge approval in writing, otherwise its verdi
 claimed trustworthiness and buried that only Claude Code is tested; it now states intent, says so under the intro,
 and gives the core loading cost with ground-truth. **Later, not blocking:** a pinned install distinct from tracking
 `main`, and the team workflow as an explicitly optional profile. **Revisit** if a fork reports either as a problem.
+
+## D34 - Latest or a release; the team workflow as core plus scale-up (2026-11-13)
+
+**Context.** D33's two follow-ups. Tracking `main` delivers every change at the next session, which the owner wants for
+their own machines, but a stranger also receives untested rules that way. agent-team read as one required process
+although most of it only pays off with several parallel agents. **Decision.** (1) `tools/sync-claude --pin vX.Y.Z`
+keeps a clone on a release tag until the person changes it; `--main` switches back; no option keeps tracking `main`,
+the default and the owner's choice. A missing tag or local changes leave the clone where it was, with a warning
+(five tests). Releases follow `docs/runbooks/cut-a-release.md`; pushed tags are never moved. (2) agent-team names its
+core (the cast for any project, the brief, handoffs, roles learn, the critical path) and marks the board and parallel
+running *(scale-up)*, with the GPU lock, job router, delegated merge gate and team-ops named as part of that profile;
+a project's own process wins. **Revisit** if pinned users report needing a channel between releases and `main`.

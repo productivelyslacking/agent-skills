@@ -10,10 +10,10 @@ specialists do the work; nothing is done until its evidence is seen.** Roles liv
 `~/.claude/agents`; the project's CLAUDE.md supplies its facts, and a same-named file in a project's `.claude/agents/` overrides one. `NOTES.md` here holds the
 incidents behind these rules.
 
-**The core cast fits any software project:** producer, developer, tech-lead, qa and, when merge approval is delegated,
-merge-reviewer. Games and story work add designer, writer, presentation, publishing, director and psychologist; skip
-them and the GPU lock where they don't apply. Game examples generalize: player data is customer data, a
-playthrough an end-to-end check.
+**Core and scale-up.** The core fits one agent or ten: producer, developer, tech-lead, qa; the brief, handoffs that
+work, roles learn, the critical path. Sections marked *(scale-up)* are a profile to adopt as a project grows: board,
+parallel worktrees, GPU lock, job router, a delegated merge gate, team-ops. Games and story add designer,
+writer, presentation, publishing, director, psychologist. A project's own process wins; player data reads as customer data.
 
 ## Who does what
 
@@ -104,13 +104,13 @@ A brief the agent can't check itself against is the producer's bug.
 - **QA doesn't fix what it judges.** It returns findings for the producer to route; lacking Edit/Write
   but not Bash, that is a convention, not a sandbox.
 
-## The board
+## The board *(scale-up)*
 
 Keep the team's state in a repo file (e.g. `docs/BOARD.md`): in progress (work, role, branch), next, waiting on the
 user, recently done. The producer updates it at every hand-off and merge; agents run one task and stop, so it is the
 plan's only home outside the producer's session.
 
-## Running agents in parallel
+## Running agents in parallel *(scale-up)*
 
 Merging a branch: **landing**.
 
