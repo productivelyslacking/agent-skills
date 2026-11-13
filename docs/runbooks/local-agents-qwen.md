@@ -1,5 +1,17 @@
 # Run the library with local models (Qwen Code)
 
+**Just do this** (Linux or WSL, Python 3, Qwen Code installed and pointed at your local model):
+
+```bash
+cd ~/agent-skills
+python3 tools/gen_local_agents.py --install          # skills, roles and rule sheet into ~/.qwen
+python3 tools/gen_local_agents.py --install-hooks    # reinstall automatically after a pull
+python3 tools/gen_local_agents.py --check-install    # verify
+```
+
+Small models: add `--rules core` to the install for a short rule sheet (under 450 tokens) instead of the full one. Undo everything
+with `--uninstall` and `--uninstall-hooks`. The details follow.
+
 **Local LLM agents (Qwen Code):** `python3 tools/gen_local_agents.py --install` links the same skills, roles and
 rule sheet into `~/.qwen`, turns on Qwen Code's sandbox and gives its agents their own git identity, recording what
 was there before (`--check-install` verifies). Then `python3 tools/gen_local_agents.py --install-hooks` adds

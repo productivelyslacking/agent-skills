@@ -1,7 +1,8 @@
 # Use the library with other AI tools
 
 **Just do this:** clone the repo, then link the skills into the folder your tool reads and point its rules file at
-`AGENTS.md`. Claude Code is the tested setup (README, "Run it"). Every other row below comes from the vendor's docs,
+`AGENTS.md`. Claude Code is the tested setup (README, "Run it"), and Qwen Code has its own installer, built against Qwen Code 0.25.0 and run live on Linux
+(2026-10-08; not re-checked since). Every other row below comes from the vendor's docs,
 read 2026-11-13, and is **untested here**; check a tool's docs if a path has moved.
 
 Three parts, in order of value:
@@ -40,6 +41,7 @@ Cursor) may list each skill twice; link only one of the two for them.
 | **Grok Build** (xAI CLI) | `~/.agents/skills`, or `[skills] paths` in `~/.grok/config.toml` | Global rules in `~/.grok/` (file name not documented); a project's `AGENTS.md` is read | `~/.grok/agents` (format not documented) |
 | **ChatGPT** | Upload each skill folder in Skills (Business, Enterprise, Healthcare, Edu plans only) | Paste into Custom Instructions or a Project's instructions (5,000 characters on paid plans; `AGENTS.md` is about 5,200, so leave out "Working on this library") | None |
 | **grok.com** | Upload in Skills; the format isn't documented | Not documented | None |
+| **Qwen Code** (local models) | `python3 tools/gen_local_agents.py --install` links them into `~/.qwen` | Installed by the same command; `--rules core` for a short sheet small models follow better | Generated for Qwen Code in `local-agents/`, installed by the same command. Details: [local-agents-qwen.md](local-agents-qwen.md) |
 
 Gemini CLI's docs say it was replaced by Antigravity CLI for unpaid and Google One users on 2026-06-18; Antigravity
 wasn't checked.

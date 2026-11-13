@@ -17,7 +17,7 @@ asks agents to check their own work, keep records that outlive the chat, say wha
 before calling anything done. Plus deep kits for games, stories, art and learning products.
 
 > **Tested with Claude Code.** The skills use the open Agent Skills format, and the
-> [setup guide for other tools](docs/runbooks/use-with-other-tools.md) (Codex, Gemini CLI, Cursor, Copilot and more)
+> [setup guide for other tools](docs/runbooks/use-with-other-tools.md) (Codex, Gemini CLI, Cursor, Copilot, Qwen Code and more)
 > comes from their docs; those integrations are unverified.
 
 ## What's in the box
@@ -44,7 +44,7 @@ matches, it reads the whole skill and follows it. You just ask normally:
 
 1. **Clone it:** `git clone https://github.com/productivelyslacking/agent-skills.git ~/agent-skills`
 2. **Link it into your tool.** Claude Code: run `~/agent-skills/tools/sync-claude` (details in "Run it" below). Codex, ChatGPT,
-   Gemini, OpenCode, Copilot, Cursor or Grok: [docs/runbooks/use-with-other-tools.md](docs/runbooks/use-with-other-tools.md).
+   Gemini, OpenCode, Copilot, Cursor, Grok or Qwen Code: [docs/runbooks/use-with-other-tools.md](docs/runbooks/use-with-other-tools.md).
 3. **Check it loaded:** in a new session, ask *"Quote the bold title of working rule 10."* It should say *Design for a
    human with little time and attention.*
 
