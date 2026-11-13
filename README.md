@@ -2,6 +2,8 @@
   <img src=".github/banner.svg" alt="AGENT//SKILLS: a retro-future starship bridge, crew at their stations, looking out at a nebula and a ringed planet" width="100%">
 </p>
 
+<p align="center"><b>Rules · skills · roles for agent crews</b></p>
+
 <p align="center">
   <a href="LICENSE"><img alt="MIT licence" src="https://img.shields.io/badge/licence-MIT-ff4fd8?style=flat-square"></a>
   <a href="https://agentskills.io/specification"><img alt="Agent Skills format" src="https://img.shields.io/badge/format-Agent%20Skills-3cf2ff?style=flat-square"></a>
@@ -185,7 +187,7 @@ The standard repo layout (durable-knowledge, "Repo layout"); `skills/` and `agen
 
 ## Credits
 
-The banner image is AI-generated. Its title is set in [Audiowide](https://fonts.google.com/specimen/Audiowide) by Astigmatic (SIL Open Font License 1.1), converted to outlines in `.github/banner.svg`.
+The banner image is AI-generated. Its title is set in [Audiowide](https://fonts.google.com/specimen/Audiowide) by Astigmatic (SIL Open Font License 1.1), converted to outlines in `.github/banner.svg`; the glow is layered strokes so it stays sharp on phones.
 
 ## When it breaks
 
