@@ -1,0 +1,203 @@
+{
+  "about": "The standard repo layout, machine-readable. The prose is durable-knowledge, 'Repo layout'; tools/check.py fails if the prose's tree, four-questions table or forbidden names differ from this file. Read by tools/layout-check, which also writes the template's stubs from it.",
+  "entries": [
+    {
+      "path": "README.md",
+      "required": true,
+      "short": "the start page",
+      "line": "START HERE. What this is, how to run it, and a table of every top-level entry"
+    },
+    {
+      "path": "AGENTS.md",
+      "required": true,
+      "short": "rules for AI agents",
+      "line": "Rules for AI agents. The only copy"
+    },
+    {
+      "path": "CLAUDE.md",
+      "required": true,
+      "short": "one line, @AGENTS.md",
+      "line": "One line: @AGENTS.md   (so Claude Code loads the same file)"
+    },
+    {
+      "path": "docs/",
+      "required": true,
+      "short": "the docs",
+      "line": "The four files below, runbooks/, and any project-specific CAPITALS files"
+    },
+    {
+      "path": "docs/STATUS.md",
+      "required": true,
+      "short": "where things stand",
+      "line": "Where things stand today and the next step (pick up here)"
+    },
+    {
+      "path": "docs/DESIGN.md",
+      "required": true,
+      "short": "how it works",
+      "line": "How it works and what it is meant to be"
+    },
+    {
+      "path": "docs/DECISIONS.md",
+      "required": true,
+      "short": "what was decided and why",
+      "line": "What was decided and why: D1, D2, ... with an index at the top"
+    },
+    {
+      "path": "docs/LESSONS.md",
+      "required": true,
+      "short": "traps and corrected facts",
+      "line": "Traps and corrected facts"
+    },
+    {
+      "path": "docs/runbooks/",
+      "required": false,
+      "short": "what to do when it breaks",
+      "line": "What to do when something breaks, or how to do a job: one file each, verb-noun.md"
+    },
+    {
+      "path": "src/",
+      "required": false,
+      "short": "the code",
+      "line": "The code (or the folder the language or engine expects; README's table names it)"
+    },
+    {
+      "path": "tests/",
+      "required": true,
+      "short": "the tests",
+      "line": "The tests"
+    },
+    {
+      "path": "tools/",
+      "required": true,
+      "short": "scripts people and CI run",
+      "line": "Scripts people and CI run. tools/check.sh runs every check CI runs"
+    },
+    {
+      "path": "tools/check.sh",
+      "required": true,
+      "short": "runs every check CI runs",
+      "line": "Runs every check CI runs, layout-check first"
+    },
+    {
+      "path": ".forgejo/workflows/",
+      "required": false,
+      "short": "CI",
+      "line": "CI (.github/workflows/ while a repo still lives on GitHub)"
+    }
+  ],
+  "unlisted_ok": [
+    "LICENSE",
+    "LICENSE.md",
+    "COPYING",
+    ".env.example",
+    "package.json",
+    "package-lock.json",
+    "pnpm-lock.yaml",
+    "pyproject.toml",
+    "requirements*.txt",
+    "requirements-dev.txt",
+    "uv.lock",
+    "go.mod",
+    "go.sum",
+    "Cargo.toml",
+    "Cargo.lock",
+    "*.csproj",
+    "*.sln",
+    "project.godot",
+    "global.json"
+  ],
+  "forbidden": [
+    {
+      "pattern": "*.log",
+      "when": "present",
+      "why": "logs never go in a repo, tracked or not",
+      "fix": "move it to a scratch folder outside the repo"
+    },
+    {
+      "pattern": "scratch*",
+      "when": "present",
+      "why": "scratch never goes in a repo, tracked or not",
+      "fix": "move it to a scratch folder outside the repo"
+    },
+    {
+      "pattern": ".env",
+      "when": "tracked",
+      "why": "secrets never go in a repo",
+      "fix": "git rm --cached .env, add .env to .gitignore, commit a .env.example"
+    }
+  ],
+  "moves": {
+    "STATUS.md": "docs/STATUS.md",
+    "CURRENT_STATE.md": "docs/STATUS.md",
+    "docs/CURRENT_STATE.md": "docs/STATUS.md",
+    "DESIGN.md": "docs/DESIGN.md",
+    "DECISIONS.md": "docs/DECISIONS.md",
+    "LESSONS.md": "docs/LESSONS.md",
+    "scripts/": "tools/",
+    "test/": "tests/",
+    "runbooks/": "docs/runbooks/"
+  },
+  "naming": {
+    "docs_file": "^[A-Z0-9][A-Z0-9_-]*\\.md$",
+    "docs_dirs": [
+      "runbooks",
+      "evidence"
+    ],
+    "runbook_file": "^[a-z0-9]+(-[a-z0-9]+)*\\.md$",
+    "evidence_dir": "^\\d{4}-\\d{2}-\\d{2}$"
+  },
+  "readme_sections": [
+    "Run it",
+    "When it breaks"
+  ],
+  "agents_points_to": "docs/STATUS.md",
+  "questions": [
+    {
+      "question": "How do I run it?",
+      "where": "`README.md`, section \"Run it\" (the first section after one paragraph saying what it is)"
+    },
+    {
+      "question": "How does it work?",
+      "where": "`docs/DESIGN.md`"
+    },
+    {
+      "question": "What was decided, and why?",
+      "where": "`docs/DECISIONS.md`"
+    },
+    {
+      "question": "What do I do when it breaks?",
+      "where": "`docs/runbooks/` (linked from README, section \"When it breaks\")"
+    }
+  ],
+  "gitignore": [
+    "build/",
+    "out/",
+    ".env"
+  ],
+  "work_tracking": {
+    "about": "Open work (bugs, roadmap items, review findings not fixed) lives in the issue tracker, one issue each. durable-knowledge, 'Repo layout', 'Open work lives in the issue tracker'.",
+    "todo": "(#|//|/\\*|<!--|--|;|\\*)\\s*(TODO|FIXME)\\b|\\b(TODO|FIXME)\\s*[:(]",
+    "cites_issue": "#\\d+|/issues/\\d+",
+    "status_task": "^\\s*[-*+] \\[ \\]",
+    "max_bytes": 2000000
+  },
+  "forms": {
+    "about": "The second allowed form of the decisions and status homes, for repos where many branches land in parallel (durable-knowledge, 'Repo layout', 'Per-file decisions and status'; D12). A repo selects each one with its line in .layout-check, `form <name>: <reason>`. Without the line, the folder is an unknown docs folder.",
+    "decision-files": {
+      "folder": "docs/decisions/",
+      "file": "^D\\d{3,}\\.md$",
+      "file_hint": "Dnnn.md, the decision's number in three or more digits (D7 is D007.md)",
+      "page": "docs/DECISIONS.md",
+      "page_links": "decisions/",
+      "line": "form decision-files: one file per decision, docs/decisions/Dnnn.md; docs/DECISIONS.md says where they are and how to add one"
+    },
+    "status-entries": {
+      "folder": "docs/status.d/",
+      "file": "^[a-z0-9]+(-[a-z0-9]+)*\\.md$",
+      "file_hint": "<slug>.md, the branch work/<slug>, lowercase-with-dashes",
+      "readme": "docs/status.d/README.md",
+      "line": "form status-entries: one entry per branch, docs/status.d/<slug>.md, folded into docs/STATUS.md at landing"
+    }
+  }
+}

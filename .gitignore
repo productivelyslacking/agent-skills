@@ -1,0 +1,12 @@
+# This repo is a staging copy of ~/.claude config. It must never contain:
+.credentials.json
+projects/
+sessions/
+shell-snapshots/
+file-history/
+backups/
+session-env/
+ide/
+*.log
+__pycache__/
+.private-terms

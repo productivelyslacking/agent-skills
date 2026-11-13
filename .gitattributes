@@ -1,0 +1,3 @@
+# LF in every checkout, Windows included: generated files record their sources' git blobs, and the scripts run
+# under bash. Without this, Git for Windows' core.autocrlf=true checks out CRLF and the generator check fails.
+* text=auto eol=lf

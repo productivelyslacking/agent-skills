@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+# Called by post-merge and post-checkout with two revisions: if the change between them touches what
+# tools/gen_local_agents.py installs (agents/, skills/, AGENTS.md, CLAUDE.md, local-agents/, the generator), rerun
+# the Qwen Code install, but only when this checkout is the one installed from (--sync). Never fails git.
+root=$(git rev-parse --show-toplevel) || exit 0
+git diff --name-only "$1" "$2" 2>/dev/null \
+  | grep -qE '^(agents/|skills/|AGENTS\.md$|CLAUDE\.md$|local-agents/|tools/gen_local_agents\.py$)' || exit 0
+python3 "$root/tools/gen_local_agents.py" --root "$root" --sync || echo "gen_local_agents: sync failed (above); run --install by hand"
+exit 0

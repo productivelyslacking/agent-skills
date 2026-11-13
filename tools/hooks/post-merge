@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+# After a pull or merge. Set up by: python3 tools/gen_local_agents.py --install-hooks
+exec "$(git rev-parse --show-toplevel)/tools/hooks/sync-local-agents" ORIG_HEAD HEAD

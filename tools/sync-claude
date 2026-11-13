@@ -1,0 +1,86 @@
+#!/usr/bin/env bash
+# Keeps this machine's Claude Code on the latest library: pulls main, links every skill and role,
+# and imports the rule sheet. Run by a SessionStart hook (README, "Run it"), and safe to run by hand.
+# Never stops a session: it says what went wrong and carries on with what is there.
+# Everything is in main() because a pull can replace this file while bash is still reading it.
+set -uo pipefail
+
+link_one() { # link_one <source> <target>: create or update a link only where it is absent or already ours
+  local source=$1 target=$2 current
+  if [ -L "$target" ]; then
+    current=$(readlink "$target")
+    if [[ $current != "$ROOT"/* ]]; then
+      problems+=("$target links to $current, not this library, so it was left alone (remove it and re-run to use the library's)")
+      return
+    fi
+  elif [ -e "$target" ]; then
+    problems+=("$target is a real file, not a link, so it was left alone (move it and re-run to use the library's)")
+    return
+  fi
+  ln -sfn "$source" "$target"
+}
+
+link_dir() { # link_dir <source glob dir> <dest dir> <suffix>: one link per entry; prunes our dangling ones
+  local src=$1 dest=$2 suffix=$3 entry name target
+  mkdir -p "$dest"
+  for entry in "$src"/*"$suffix"; do
+    [ -e "$entry" ] || continue
+    name=$(basename "$entry")
+    link_one "${entry%/}" "$dest/$name"
+  done
+  for target in "$dest"/*; do
+    if [ -L "$target" ] && [ ! -e "$target" ] && [[ $(readlink "$target") == "$ROOT"/* ]]; then
+      rm -f "$target"
+    fi
+  done
+}
+
+main() {
+  ROOT=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd -P)
+  local claude=$HOME/.claude before after branch changed import output root_native=$ROOT
+  problems=()
+  # Git Bash on Windows: real symlinks (needs Developer Mode) rather than silent copies, and Windows
+  # paths for Claude Code to read. Both are no-ops elsewhere.
+  export MSYS=winsymlinks:nativestrict
+  if command -v cygpath >/dev/null; then root_native=$(cygpath -m "$ROOT"); fi
+  before=$(git -C "$ROOT" rev-parse HEAD)
+  branch=$(git -C "$ROOT" symbolic-ref --short -q HEAD || echo detached)
+
+  if [ "$branch" != main ]; then
+    problems+=("the clone is on $branch, not main, so it was not updated")
+  elif ! output=$(GIT_TERMINAL_PROMPT=0 timeout 10 git -C "$ROOT" pull --ff-only --quiet 2>&1); then
+    problems+=("git pull failed, so this session may be behind: ${output:0:200}")
+  fi
+  after=$(git -C "$ROOT" rev-parse HEAD)
+
+  link_dir "$ROOT/skills" "$claude/skills" "/"
+  link_dir "$ROOT/agents" "$claude/agents" ".md"
+  mkdir -p "$HOME/.local/bin"
+  link_one "$ROOT/tools/layout-check" "$HOME/.local/bin/layout-check"
+
+  import="@$root_native/CLAUDE.md"
+  if ! grep -qxF "$import" "$claude/CLAUDE.md" 2>/dev/null; then
+    { echo "$import"; cat "$claude/CLAUDE.md" 2>/dev/null; } >"$claude/CLAUDE.md.new"
+    mv "$claude/CLAUDE.md.new" "$claude/CLAUDE.md"
+  fi
+
+  changed=""
+  if [ "$before" != "$after" ]; then
+    changed=$(git -C "$ROOT" diff --name-only "$before" "$after" | grep -E '^(AGENTS|CLAUDE)\.md$' || true)
+  fi
+  CHANGED=$changed RULES=$root_native/AGENTS.md PROBLEMS=$(printf '%s\n' "${problems[@]+"${problems[@]}"}") python3 -I -c '
+import json, os
+out = {}
+if os.environ["PROBLEMS"].strip():
+    out["systemMessage"] = "agent-skills: " + "; ".join(os.environ["PROBLEMS"].split("\n")).strip("; ")
+if os.environ["CHANGED"]:
+    # Hooks may run after the rule sheet was read, so say so rather than assume.
+    out["hookSpecificOutput"] = {"hookEventName": "SessionStart", "additionalContext":
+        "The skill library rules changed just now. Read " + os.environ["RULES"] + " before acting."}
+if out:
+    print(json.dumps(out))
+'
+  exit 0
+}
+
+main "$@"

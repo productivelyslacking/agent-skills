@@ -1,0 +1,351 @@
+#!/usr/bin/env python3
+"""layout-check: reports what a repo is missing or has misplaced against the standard repo layout.
+
+    layout-check [path]                    one plain line per finding; exit 0 clean, 1 findings, 2 bad usage
+    layout-check --fix-hint [path]         the same, each followed by the command (or edit) that fixes it
+    layout-check --stub [path] [--only P]  write the template's stub for every missing required file (or just P)
+    layout-check --tree                    print the standard tree (durable-knowledge quotes it; check.py compares)
+
+The standard is tools/repo-layout.json beside this script (resolved through symlinks, so a link on PATH works);
+its prose is the skill library's durable-knowledge, "Repo layout". Python 3 standard library only.
+A repo names its exceptions in .layout-check, one per line: `allow <path>: <reason>`, and selects any of the
+layout's second allowed forms there: `form <name>: <reason>` (repo-layout.json, "forms").
+"""
+import argparse, fnmatch, json, os, pathlib, re, stat, subprocess, sys
+
+SPEC_PATH = pathlib.Path(__file__).resolve().parent / "repo-layout.json"
+SKIP_DIRS = {".git", "node_modules", "build", "out", "vendor", "__pycache__", ".venv"}
+
+
+def load_spec(path=SPEC_PATH):
+    return json.loads(pathlib.Path(path).read_text())
+
+
+def tree(spec):
+    """The standard tree, one line per entry: the text durable-knowledge's "Repo layout" quotes."""
+    lines = []
+    for e in spec["entries"]:
+        depth = e["path"].rstrip("/").count("/")
+        name = e["path"].rstrip("/").split("/")[-1] + ("/" if e["path"].endswith("/") else "")
+        if e["path"] == ".forgejo/workflows/":
+            depth, name = 0, e["path"]
+        if e["path"] == "tools/check.sh":
+            continue  # said in tools/'s own line; listed in the spec so it is required and stubbed
+        label = "  " * depth + name
+        lines.append(f"{label:<17}{e['line']}" if len(label) < 17 else f"{label}   {e['line']}")
+    return "\n".join(lines)
+
+
+# --- what is in the repo ---------------------------------------------------------------------------------
+
+def git(root, *args):
+    r = subprocess.run(["git", "-C", str(root), *args], capture_output=True, text=True)
+    return r.stdout.splitlines() if r.returncode == 0 else None
+
+
+class Repo:
+    def __init__(self, root):
+        self.root = root
+        self.tracked = git(root, "ls-files") if (root / ".git").exists() else None
+        visible = git(root, "ls-files", "-co", "--exclude-standard") if self.tracked is not None else None
+        if visible is None:  # not a git checkout: everything on disk counts
+            visible = [str(p.relative_to(root)) for p in self.walk()]
+        self.visible = set(visible)
+        self.top_visible = {v.split("/")[0] + ("/" if "/" in v else "") for v in visible}
+
+    def walk(self):
+        for dirpath, dirnames, filenames in os.walk(self.root):
+            dirnames[:] = [d for d in dirnames if d not in SKIP_DIRS]
+            for f in filenames:
+                yield pathlib.Path(dirpath, f)
+
+    def exists(self, rel):
+        return (self.root / rel.rstrip("/")).is_dir() if rel.endswith("/") else (self.root / rel).is_file()
+
+    def files_named(self, name):
+        return sorted(r for r in self.visible if r == name or r.endswith("/" + name))
+
+
+# --- the checks -------------------------------------------------------------------------------------------
+
+def check(root, spec, forms=()):
+    """Findings as (path, message, fix). fix is a shell command where one exists, else the edit to make.
+    forms: the names of the second allowed forms the repo selected in .layout-check."""
+    repo, out = Repo(root), []
+    stub = f"layout-check --stub {root}"
+    root_q = str(root)
+
+    def add(path, message, fix):
+        out.append((path, message, fix))
+
+    moved_to = {}
+    for src, dst in spec["moves"].items():
+        if repo.exists(src):
+            moved_to[dst] = src
+            mk = os.path.dirname(dst.rstrip("/"))
+            add(src, f"misplaced {src}: it goes in {dst}",
+                (f"mkdir -p {mk} && " if mk else "") + f"git -C {root_q} mv {src.rstrip('/')} {dst.rstrip('/')}")
+
+    for e in spec["entries"]:
+        p = e["path"]
+        has_required_child = p.endswith("/") and any(c["required"] and c["path"] != p and c["path"].startswith(p)
+                                                     for c in spec["entries"])
+        if e["required"] and not repo.exists(p) and p not in moved_to and not has_required_child:
+            add(p, f"missing {p}: {e['short']}; create it from the template", f"{stub} --only {p}")
+
+    tools_check = root / "tools/check.sh"
+    if tools_check.is_file() and not tools_check.stat().st_mode & stat.S_IXUSR:
+        add("tools/check.sh", "tools/check.sh is not executable: CI and people run it directly",
+            f"chmod +x {tools_check} && git -C {root_q} update-index --chmod=+x tools/check.sh")
+
+    # Agent files: AGENTS.md is the one source; every CLAUDE.md is the line @AGENTS.md with an AGENTS.md beside it.
+    for rel in repo.files_named("CLAUDE.md"):
+        text = (root / rel).read_text(errors="replace").strip()
+        folder = os.path.dirname(rel)
+        agents = os.path.join(folder, "AGENTS.md") if folder else "AGENTS.md"
+        if text != "@AGENTS.md":
+            add(rel, f"{rel} is not the one line @AGENTS.md: its rules belong in {agents}",
+                f"cat {root / rel} >> {root / agents} && printf '@AGENTS.md\\n' > {root / rel}")
+        if folder and not (root / agents).is_file():
+            add(agents, f"missing {agents}: the rules {rel} imports", f"move the folder's rules into {root / agents}")
+    agents_md = root / "AGENTS.md"
+    if agents_md.is_file() and spec["agents_points_to"] not in agents_md.read_text(errors="replace"):
+        add("AGENTS.md", f"AGENTS.md doesn't send agents to {spec['agents_points_to']}: say to read it first",
+            f"add 'Read {spec['agents_points_to']} first.' near the top of AGENTS.md")
+
+    # README: the start page, with the run and break sections and a row for every top-level entry.
+    readme = root / "README.md"
+    if readme.is_file():
+        text = readme.read_text(errors="replace")
+        for section in spec["readme_sections"]:
+            if not re.search(rf"^#+\s+{re.escape(section)}\b", text, re.M | re.I):
+                add("README.md", f"README.md has no \"{section}\" section", f"add a '## {section}' section to README.md")
+        rows = set()
+        for line in text.splitlines():
+            if line.startswith("|"):
+                cell = line.strip("|").split("|")[0].strip().strip("*`").strip()
+                rows.add(cell.rstrip("/"))
+        for entry in sorted(repo.top_visible):
+            name = entry.rstrip("/")
+            if name.startswith(".") or any(fnmatch.fnmatch(name, pat) for pat in spec["unlisted_ok"]):
+                continue
+            if name not in rows and not any(fnmatch.fnmatch(name, pat.rstrip("/")) for pat in spec["moves"]):
+                add(entry, f"{entry} is not in README.md's layout table: add a row saying what it is, or move it",
+                    f"add the row '| `{entry}` | <what it is> |' to README.md's layout table")
+
+    # Never in a repo: scratch and logs (even ignored), secrets (tracked).
+    on_disk = sorted(os.listdir(root))
+    tracked_top = {t.split("/")[0] for t in (repo.tracked or [])}
+    for rule in spec["forbidden"]:
+        for name in on_disk:
+            if not fnmatch.fnmatch(name, rule["pattern"]):
+                continue
+            if rule["when"] == "tracked" and name not in tracked_top:
+                continue
+            add(name, f"{name} doesn't belong in a repo: {rule['why']}", rule["fix"])
+
+    # Names: fixed docs files in CAPITALS, runbooks verb-noun lowercase, evidence folders dated.
+    n = spec["naming"]
+    docs = root / "docs"
+    form_dirs = {spec["forms"][f]["folder"].rstrip("/").split("/")[-1]: f for f in forms}
+    if docs.is_dir():
+        for p in sorted(docs.iterdir()):
+            rel = f"docs/{p.name}"
+            if p.is_dir():
+                if p.name not in n["docs_dirs"] and p.name not in form_dirs:
+                    known = [f"{f['folder'].split('/')[1]} with `form {name}`" for name, f in spec["forms"].items()
+                             if name != "about"]
+                    add(rel + "/", f"docs/{p.name}/ is not a docs folder the layout knows "
+                                   f"({', '.join(n['docs_dirs'] + known)})",
+                        f"move its files into docs/ as CAPITALS files, or allow it in {root}/.layout-check")
+            elif p.suffix == ".md" and p.name != "README.md" and not re.match(n["docs_file"], p.name):
+                fixed = re.sub(r"[^A-Z0-9_]+", "-", p.stem.upper()).strip("-") + ".md"
+                add(rel, f"{rel} should be CAPITALS: fixed docs files are named like STATUS.md",
+                    f"git -C {root_q} mv {rel} docs/{fixed}")
+        for p in sorted((docs / "runbooks").glob("*.md")) if (docs / "runbooks").is_dir() else []:
+            if p.name != "README.md" and not re.match(n["runbook_file"], p.name):
+                fixed = re.sub(r"[^a-z0-9]+", "-", p.stem.lower()).strip("-") + ".md"
+                add(f"docs/runbooks/{p.name}", f"docs/runbooks/{p.name} should be lowercase-with-dashes, verb first",
+                    f"git -C {root_q} mv docs/runbooks/{p.name} docs/runbooks/{fixed}")
+        for p in sorted((docs / "evidence").iterdir()) if (docs / "evidence").is_dir() else []:
+            if p.is_dir() and not re.match(n["evidence_dir"], p.name):
+                add(f"docs/evidence/{p.name}/", f"docs/evidence/{p.name}/ should be named YYYY-MM-DD",
+                    f"git -C {root_q} mv docs/evidence/{p.name} docs/evidence/<YYYY-MM-DD>")
+
+    # The second allowed forms: each one's folder exists, its files are named its way, and its page points to it.
+    for name in forms:
+        f = spec["forms"][name]
+        folder = root / f["folder"]
+        if not folder.is_dir():
+            add(f["folder"], f"missing {f['folder']}: .layout-check selects form {name}, whose folder it is",
+                f"mkdir -p {folder}, or remove the form line from {root}/.layout-check")
+            continue
+        for p in sorted(folder.iterdir()):
+            rel = f["folder"] + p.name
+            if p.name == "README.md" and p.is_file():
+                continue
+            if p.is_dir() or not re.match(f["file"], p.name):
+                add(rel, f"{rel} is not named like form {name}'s files: {f['file_hint']}",
+                    f"rename it to {f['file_hint'].split(',')[0]}, or move it out of {f['folder']}")
+        if "readme" in f and not (root / f["readme"]).is_file():
+            add(f["readme"], f"missing {f['readme']}: form {name}'s folder says its format there",
+                f"write {root / f['readme']}: the format of an entry and how it is folded")
+        if "page" in f:
+            page = root / f["page"]
+            if page.is_file() and f["page_links"] not in page.read_text(errors="replace"):
+                add(f["page"], f"{f['page']} doesn't point to {f['folder']}: with form {name} it holds no "
+                               "decisions, it says where they are and how to add one",
+                    f"link ({f['page_links']}) from {page}")
+
+    # Open work lives in the issue tracker: every TODO or FIXME cites its issue, and STATUS.md keeps no task list.
+    w = spec["work_tracking"]
+    todo, cites, task = re.compile(w["todo"]), re.compile(w["cites_issue"]), re.compile(w["status_task"])
+    # With form status-entries, an entry is folded into STATUS.md, so it keeps no task list either.
+    entries = spec["forms"]["status-entries"]["folder"] if "status-entries" in forms else None
+
+    def status_text(rel):
+        return rel == "docs/STATUS.md" or bool(entries and rel.startswith(entries) and rel.endswith(".md")
+                                                 and rel != entries + "README.md")
+    for rel in sorted(repo.tracked if repo.tracked is not None else repo.visible):
+        p = root / rel
+        if rel == ".layout-check" or not p.is_file() or p.is_symlink() or p.stat().st_size > w["max_bytes"]:
+            continue
+        data = p.read_bytes()
+        if b"\0" in data[:8192]:
+            continue  # binary
+        for i, line in enumerate(data.decode(errors="replace").splitlines(), 1):
+            if todo.search(line) and not cites.search(line):
+                add(rel, f"{rel}:{i} has a TODO or FIXME that cites no issue: file it in the tracker and cite its "
+                         "number, like TODO(#12)",
+                    f"file an issue, then cite it on {rel}:{i} like TODO(#12), or remove the comment")
+            elif status_text(rel) and task.search(line):
+                add(rel, f"{rel}:{i} is a task list item: open work goes in the issue tracker, one issue each",
+                    f"file an issue for {rel}:{i} and link the issue or its milestone instead")
+    return out
+
+
+def exceptions(root, spec):
+    """(allowed paths, selected forms, findings about the file itself) from root/.layout-check."""
+    path, allowed, forms, bad = root / ".layout-check", {}, [], []
+    if not path.is_file():
+        return allowed, forms, bad
+    names = sorted(n for n in spec["forms"] if n != "about")
+    for i, line in enumerate(path.read_text().splitlines(), 1):
+        line = line.strip()
+        if not line or line.startswith("#"):
+            continue
+        m = re.match(r"^allow\s+(\S+):\s*(\S.*)$", line)
+        f = re.match(r"^form\s+(\S+):\s*(\S.*)$", line)
+        if m:
+            allowed[m.group(1)] = m.group(2)
+        elif f and f.group(1) in names:
+            forms.append(f.group(1))
+        elif f:
+            bad.append((".layout-check", f".layout-check line {i}: no form named {f.group(1)} "
+                                         f"(the layout's forms: {', '.join(names)})", f"fix line {i} of {path}"))
+        else:
+            bad.append((".layout-check", f".layout-check line {i} is not 'allow <path>: <reason>' "
+                                         "or 'form <name>: <reason>'", f"fix line {i} of {path}"))
+    return allowed, forms, bad
+
+
+# --- stubs (the template is made with these) --------------------------------------------------------------
+
+def stubs(spec, name):
+    """Every stub file the template holds, from the spec: {relative path: text}."""
+    by = {e["path"]: e for e in spec["entries"]}
+    top = [e for e in spec["entries"] if e["required"] and "/" not in e["path"].rstrip("/")]
+    rows = "\n".join(f"| `{e['path']}` | {e['line']} |" for e in top)
+    files = {
+        "README.md": f"# {name}\n\nOne paragraph: what this is and who it is for.\n\n## Run it\n\n"
+                     f"The one command that runs it goes here. Every check: `tools/check.sh`.\n\n## Layout\n\n"
+                     f"| Entry | What it is |\n|---|---|\n{rows}\n\n## When it breaks\n\n"
+                     f"One runbook per job in [docs/runbooks/](docs/runbooks/).\n",
+        "AGENTS.md": "# Agent rules\n\nRead docs/STATUS.md first. People start at README.md; this file is for agents and "
+                     "links to the docs rather than repeating them.\n\nThe general working rules are the skill "
+                     "library's AGENTS.md (agent-skills), loaded on every machine through "
+                     "`~/.claude/CLAUDE.md`. This file holds only what is true of this repo.\n\n"
+                     "## Rules for this repo\n\nNone yet.\n",
+        "CLAUDE.md": "@AGENTS.md\n",
+        "docs/runbooks/README.md": f"# Runbooks\n\n{by['docs/runbooks/']['line']}.\n",
+        "tests/README.md": "# Tests\n\nThe tests. tools/check.sh runs them.\n",
+        "tools/check.sh": "#!/usr/bin/env bash\n# Runs every check CI runs, layout-check first. Stops at the first failure.\n"
+                          "set -euo pipefail\ncd \"$(dirname \"$0\")/..\"\n"
+                          "LC=\"${LAYOUT_CHECK:-$(command -v layout-check || true)}\"\n"
+                          "if [ -z \"$LC\" ]; then\n  echo \"check.sh: layout-check not found: link the skill library's "
+                          "tools/layout-check into ~/.local/bin, or set LAYOUT_CHECK to its path\"\n  exit 2\nfi\n"
+                          "\"$LC\" .\n# This repo's own checks go below.\n",
+        ".gitignore": "".join(f"{g}\n" for g in spec["gitignore"]),
+    }
+    for e in spec["entries"]:
+        p = e["path"]
+        if p.startswith("docs/") and p.endswith(".md"):
+            title = pathlib.Path(p).stem.capitalize()
+            files[p] = f"# {title}\n\n{e['line']}.\n"
+    return files
+
+
+def write_stubs(root, spec, only=None):
+    written = []
+    for rel, text in stubs(spec, root.resolve().name).items():
+        target = root / rel
+        if only and not (rel == only or rel.startswith(only.rstrip("/") + "/")):
+            continue
+        if target.exists():
+            continue
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(text)
+        if rel.endswith(".sh"):
+            target.chmod(0o755)
+        written.append(rel)
+    return written
+
+
+def main(argv=None):
+    ap = argparse.ArgumentParser(prog="layout-check", description=__doc__.splitlines()[0])
+    ap.add_argument("path", nargs="?", default=".")
+    ap.add_argument("--fix-hint", action="store_true", help="print the command that fixes each finding")
+    ap.add_argument("--stub", action="store_true", help="write the template's stubs for missing required files")
+    ap.add_argument("--only", help="with --stub: only this path")
+    ap.add_argument("--name", help="with --stub: the title README.md gets (default: the folder's name)")
+    ap.add_argument("--tree", action="store_true", help="print the standard tree and exit")
+    try:
+        args = ap.parse_args(argv)
+    except SystemExit as e:
+        return 2 if e.code else 0
+    spec = load_spec()
+    if args.tree:
+        print(tree(spec))
+        return 0
+    root = pathlib.Path(args.path).resolve()
+    if not root.is_dir():
+        print(f"layout-check: {root} is not a folder")
+        return 2
+    if args.stub:
+        if args.name:
+            readme = stubs(spec, args.name)["README.md"]
+        written = write_stubs(root, spec, args.only)
+        if args.name and "README.md" in written:
+            (root / "README.md").write_text(readme)
+        for rel in written:
+            print(f"wrote {rel}")
+        print(f"layout-check: {len(written)} stub(s) written in {root}")
+        return 0
+    allowed, forms, findings = exceptions(root, spec)
+    for path, message, fix in check(root, spec, forms):
+        if path in allowed or path.rstrip("/") in allowed:
+            continue
+        findings.append((path, message, fix))
+    for path, message, fix in findings:
+        print(message)
+        if args.fix_hint:
+            print(f"  fix: {fix}")
+    if findings:
+        print(f"layout-check: {len(findings)} finding(s) in {root}")
+        return 1
+    print(f"layout-check: {root} follows the standard layout")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
