@@ -22,8 +22,8 @@ before calling anything done. Plus deep kits for games, stories, art and learnin
 
 | | What it is | When it loads |
 |---|---|---|
-| 🧭 **Rules** | `AGENTS.md`: eleven working rules, such as *verify against the real thing* and *never claim what you can't show* | Every session: about 1,500 tokens; with **ground-truth**, which most tasks load, about 5,400 (estimated) |
-| 💾 **Skills** | 24 folders of know-how, each a `SKILL.md` in the open [Agent Skills](https://agentskills.io/specification) format | Only when a task needs one |
+| 🛰️ **Rules** | `AGENTS.md`: eleven working rules, such as *verify against the real thing* and *never claim what you can't show* | Every session: about 1,500 tokens; with **ground-truth**, which most tasks load, about 5,400 (estimated) |
+| 🪐 **Skills** | 24 folders of know-how, each a `SKILL.md` in the open [Agent Skills](https://agentskills.io/specification) format | Only when a task needs one |
 | 🧑‍🚀 **Roles** | 11 team agents (developer, QA, tech lead, merge reviewer, director and more) the main session hands work to | When you split work across agents |
 
 **How a skill works, in 30 seconds.** Your agent sees each skill's name and a one-line "use when". When your request
@@ -54,7 +54,7 @@ projects come back as candidates and earn their way in ([how](skills/durable-kno
 
 ◇ marks a skill built from published research and not yet proven in real use; its claims say how far to trust them.
 
-### 🧭 Core discipline
+### 🛰️ Core discipline
 
 | Skill | Use when |
 |---|---|
@@ -88,7 +88,7 @@ projects come back as candidates and earn their way in ([how](skills/durable-kno
 | **teaching-programming** | ◇ Coding lessons, exercises, autograders and error help |
 | **production-stages** | ◇ When to commit to final art, voice and locks in a game or story production |
 
-### 🕹️ Game development
+### 👾 Game development
 
 Learned on a Godot 4 C# action RPG and generalized.
 
