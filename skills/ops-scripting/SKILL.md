@@ -62,6 +62,10 @@ SYSTEM or a service account is a different world from your session; test as the 
 - **Never put a secret on a command line:** `sudo` and auditd log the full argv and `ps` shows it to every user. Hand it
   over on stdin or in a 0600 file the command reads (`grep -F -f /dev/stdin`, `curl -H @file`, `--password-file`),
   privileged commands most of all.
+- **A Windows path inside a script's string literal is not text:** `C:\repo` in a Python string, `$'...'` or `printf`
+  becomes `C:`, a carriage return and `epo` (`\a` a bell), and the file looks right in most viewers. Pass paths as
+  arguments or build them from a backslash variable, then check the written bytes (`repr`, `od -c`) for control
+  characters.
 
 ## Protect by permission, not by recognition
 
