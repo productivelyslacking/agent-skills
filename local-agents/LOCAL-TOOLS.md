@@ -15,7 +15,7 @@
   skills/dependency-policy/SKILL.md (git blob 5b6394daf6e5819698098e86e2019d4403f4cded)
   skills/directing/SKILL.md (git blob fc9431d5946557ce0cc62d259c0a0915a19312ab)
   skills/durable-knowledge/SKILL.md (git blob bdd470c8e716e06468c4540bd2ed4fdecc984300)
-  skills/gamedev-team-practices/SKILL.md (git blob fe76b9372b17ed62864af7b53025ff243230819b)
+  skills/gamedev-team-practices/SKILL.md (git blob 0e10c8db88f6ffe03789150f19c63c91080d4dc8)
   skills/generated-art/SKILL.md (git blob 34a2bd25b2ed270110e236ed125215ce5eec8b02)
   skills/ground-truth/SKILL.md (git blob c2ceecb568fa0855c875903651dbc6c044c5ab8d)
   skills/landing/SKILL.md (git blob 63f33b1d9e67dd1ee3ea904730442d4f3ce2d220)

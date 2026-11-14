@@ -64,6 +64,11 @@ controller-first) and the keyboard; saves and loads, with a format upgrade if it
 has tests for its rules; has its decision recorded and status updated in the design doc; and leaves no untracked
 placeholder assets (**game-assets**).
 
+**One behaviour per control** (experiment, owner's rule): a control works the same way on every screen that has it
+(search box, list, confirm button). A difference needs a strong reason, a decision record and an on-screen cue. Briefs
+list every screen with the same control and build one shared component; reviewers treat an unexplained difference as a
+finding.
+
 ## Quality budgets and readiness
 
 - **Set a frame-time budget and profile on the target hardware before optimizing.**
