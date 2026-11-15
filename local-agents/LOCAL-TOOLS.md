@@ -11,7 +11,7 @@
   agents/team-ops.md (git blob b846afd93a8ec39388b8dfb2f9f78ee216e1cdc4)
   agents/tech-lead.md (git blob 6cc10b9171ff07e0e5b18e001d0dd2178fffb09f)
   agents/writer.md (git blob c934837e00a779113d54cbe4267630d4199110c7)
-  skills/agent-team/SKILL.md (git blob 0546e2b97760df0619333ca2b042f9d8e2da1242)
+  skills/agent-team/SKILL.md (git blob 18e4cd1a25596517c65c454ba66b3f47dc782cce)
   skills/dependency-policy/SKILL.md (git blob 5b6394daf6e5819698098e86e2019d4403f4cded)
   skills/directing/SKILL.md (git blob fc9431d5946557ce0cc62d259c0a0915a19312ab)
   skills/durable-knowledge/SKILL.md (git blob bdd470c8e716e06468c4540bd2ed4fdecc984300)

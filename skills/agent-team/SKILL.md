@@ -92,10 +92,8 @@ A brief the agent can't check itself against is the producer's bug.
   once, then record it as **not run**, with what it would have covered, never as zero findings. A landing that needs
   its verdict waits, or the user decides (D15).
 - **With CI, the branch head's run is the build and test evidence;** the hand-back links it. Builders run the
-  narrowest check covering their change; QA and the tech lead read the run's output and re-run only what it misses
-  (renders, clips, playthroughs, cases beyond the brief). The merge-reviewer's rebased run (D9) is the one full
-  re-run. Where full CI on every push would compete with landings on shared runners, branches run a quick subset
-  and the landing ref runs everything; the branch run is then evidence only for what it ran.
+  narrowest check covering their change; QA and the tech lead read the run's output and re-run only what it misses.
+  The merge-reviewer's rebased run (D9) is the one full re-run. Branch CI that runs a subset proves only that subset.
 - **A fix for a bug the user saw starts red on main, on the device's path:** the backend it selects, the original
   input bytes, any server fallback. Then show the branch passing; a fix proven on another path passes every gate and
   leaves the bug. If main can't be made to fail, report "not reproduced" and diagnose instead of fixing.
